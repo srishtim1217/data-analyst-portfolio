@@ -256,3 +256,81 @@ FROM (
 ) t
 ORDER BY visited_on
 LIMIT 6, 100;
+
+Problem 31: Count Subjects per Teacher
+SELECT teacher_id, COUNT(DISTINCT subject_id) AS cnt
+FROM teacher
+GROUP BY teacher_id;
+
+Problem 32: First Year Sales
+SELECT s.product_id, s.year AS first_year, s.quantity, s.price
+FROM sales s
+JOIN (
+    SELECT product_id, MIN(year) AS first_year
+    FROM sales
+    GROUP BY product_id
+) t
+ON s.product_id = t.product_id
+AND s.year = t.first_year;
+
+Problem 33: Classes with ≥ 5 Students
+SELECT class
+FROM courses
+GROUP BY class
+HAVING COUNT(student) >= 5;
+
+Problem 34: Followers Count per User
+SELECT user_id, COUNT(follower_id) AS followers_count
+FROM followers
+GROUP BY user_id
+ORDER BY user_id;
+
+Problem 35: Largest Unique Number
+SELECT MAX(num) AS num
+FROM (
+    SELECT num
+    FROM MyNumbers
+    GROUP BY num
+    HAVING COUNT(num) = 1
+) t;
+
+Problem 36: Customers Who Bought All Products
+SELECT c.customer_id
+FROM Customer c
+LEFT JOIN product p
+ON c.product_key = p.product_key
+GROUP BY c.customer_id
+HAVING COUNT(DISTINCT p.product_key) = (
+    SELECT COUNT(*) FROM product
+);
+
+Problem 37: Employees Reporting Stats
+SELECT t1.employee_id, t1.name,
+COUNT(t2.reports_to) AS reports_count,
+ROUND(AVG(t2.age), 0) AS average_age
+FROM Employees t1
+JOIN Employees t2
+ON t1.employee_id = t2.reports_to
+GROUP BY t1.employee_id, t1.name
+ORDER BY t1.employee_id;
+
+Problem 38: Primary Department for Each Employee
+SELECT employee_id, department_id
+FROM Employee
+WHERE primary_flag = 'Y'
+
+UNION ALL
+
+SELECT employee_id, department_id
+FROM Employee
+GROUP BY employee_id, department_id
+HAVING COUNT(employee_id) = 1;
+
+Problem 39: Triangle Validation
+SELECT x, y, z,
+CASE 
+WHEN x + y > z AND y + z > x AND x + z > y
+THEN 'Yes' 
+ELSE 'No'
+END AS triangle
+FROM triangle;

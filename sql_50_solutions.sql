@@ -153,3 +153,106 @@ FROM transactions
 GROUP BY DATE_FORMAT(trans_date, '%Y-%m'), country;
 AND b.activity_type = 'end'
 GROUP BY a.machine_id;
+
+Problem 21: Products Sold in February (≥100 units)
+SELECT p.product_name, SUM(o.unit) AS unit
+FROM products p
+LEFT JOIN orders o
+ON p.product_id = o.product_id
+WHERE MONTH(o.order_date) = 2
+GROUP BY p.product_name
+HAVING SUM(o.unit) >= 100;
+
+Problem 22: Daily Sold Products List
+SELECT sell_date,
+COUNT(DISTINCT product) AS num_sold,
+GROUP_CONCAT(DISTINCT product ORDER BY product) AS products
+FROM activities
+GROUP BY sell_date;
+
+Problem 23: Second Highest Salary
+SELECT (
+    SELECT DISTINCT salary
+    FROM employee
+    ORDER BY salary DESC
+    LIMIT 1 OFFSET 1
+) AS SecondHighestSalary;
+
+Problem 24: Delete Duplicate Emails
+DELETE p1
+FROM person p1
+JOIN person p2
+ON p1.email = p2.email
+AND p1.id > p2.id;
+
+Problem 25: Patients with Diabetes (DIAB1)
+SELECT patient_id, patient_name, conditions
+FROM Patients
+WHERE conditions LIKE '%DIAB1%';
+
+Problem 26: Capitalize User Names
+SELECT user_id,
+CONCAT(
+    UPPER(LEFT(name,1)),
+    LOWER(SUBSTRING(name,2))
+) AS name
+FROM users;
+
+Problem 27: Top 3 Salaries per Department
+SELECT Department, Employee, Salary 
+FROM(
+    SELECT 
+    d.name AS department,
+    e.name AS employee,
+    e.salary,
+    DENSE_RANK() OVER (
+        PARTITION BY d.name 
+        ORDER BY salary DESC
+    ) AS ranks
+    FROM employee e
+    LEFT JOIN department d
+    ON e.departmentID = d.ID
+) t
+WHERE ranks <= 3;
+
+Problem 28: Insurance TIV Calculation
+SELECT ROUND(SUM(tiv_2016), 2) AS tiv_2016
+FROM (
+    SELECT *,
+    COUNT(*) OVER (PARTITION BY tiv_2015) AS a,
+    COUNT(*) OVER (PARTITION BY lat, lon) AS b
+    FROM insurance
+) t
+WHERE a > 1 
+AND b = 1;
+
+Problem 29: Most Active User (Requests)
+SELECT id, COUNT(*) AS num
+FROM (
+    SELECT requester_id AS id FROM RequestAccepted
+    UNION ALL
+    SELECT accepter_id AS id FROM RequestAccepted
+) t
+GROUP BY id
+ORDER BY num DESC
+LIMIT 1;
+
+Problem 30: 7-Day Moving Average (Restaurant Growth)
+SELECT visited_on,
+SUM(amount) OVER (
+    ORDER BY visited_on
+    ROWS BETWEEN 6 PRECEDING AND CURRENT ROW
+) AS amount,
+ROUND(
+    AVG(amount) OVER (
+        ORDER BY visited_on
+        ROWS BETWEEN 6 PRECEDING AND CURRENT ROW
+    ), 2
+) AS average_amount
+FROM (
+    SELECT visited_on, SUM(amount) AS amount
+    FROM customer
+    GROUP BY visited_on
+) t
+ORDER BY visited_on
+LIMIT 6, 100;

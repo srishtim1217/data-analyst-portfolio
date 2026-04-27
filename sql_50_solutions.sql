@@ -334,3 +334,148 @@ THEN 'Yes'
 ELSE 'No'
 END AS triangle
 FROM triangle;
+
+Problem 40: User with Highest Rating & Top Movie (Feb 2020)
+(SELECT u.name AS results
+FROM users u
+LEFT JOIN movierating mr
+ON u.user_id = mr.user_id
+WHERE mr.rating = (
+    SELECT MAX(mr.rating) FROM movierating
+)
+GROUP BY u.name
+ORDER BY MAX(mr.rating) DESC, u.name 
+LIMIT 1)
+
+UNION ALL
+
+(SELECT m.title AS results
+FROM movies m
+JOIN movierating mr
+ON m.movie_id = mr.movie_id
+WHERE YEAR(created_at) = 2020
+AND MONTH(created_at) = 2
+GROUP BY m.title 
+ORDER BY AVG(mr.rating) DESC, m.title ASC
+LIMIT 1);
+
+Problem 41: Swap Seats
+SELECT
+CASE 
+WHEN id % 2 = 1 AND id <> (SELECT MAX(id) FROM seat) THEN id + 1
+WHEN id % 2 = 0 THEN id - 1
+ELSE id 
+END AS id, student
+FROM seat
+ORDER BY id;
+
+Problem 42: Employees with Missing Manager
+SELECT employee_id
+FROM employees
+WHERE salary < 30000 
+AND manager_id NOT IN (
+    SELECT employee_id FROM employees
+)
+ORDER BY employee_id;
+
+Problem 43: Salary Categories Count
+SELECT 
+"Low Salary" AS category,
+COUNT(CASE WHEN income < 20000 THEN 1 END) AS accounts_count
+FROM accounts 
+
+UNION ALL
+
+SELECT 
+"Average Salary" AS category,
+COUNT(CASE WHEN income BETWEEN 20000 AND 50000 THEN 1 END) AS accounts_count
+FROM accounts 
+
+UNION ALL
+
+SELECT 
+"High Salary" AS category,
+COUNT(CASE WHEN income > 50000 THEN 1 END) AS accounts_count
+FROM accounts;
+
+Problem 44: Last Person Within Weight Limit
+SELECT person_name
+FROM(
+    SELECT person_name, turn,
+    SUM(weight) OVER (ORDER BY turn) AS total_weight
+    FROM Queue
+) t
+WHERE total_weight <= 1000
+ORDER BY turn DESC 
+LIMIT 1;
+
+Problem 45: Daily Active Users
+SELECT activity_date AS day,
+COUNT(DISTINCT user_id) AS active_users
+FROM activity
+WHERE activity_date BETWEEN '2019-06-28' AND '2019-07-27'
+GROUP BY activity_date;
+
+Problem 46: Consecutive Numbers
+SELECT DISTINCT num AS ConsecutiveNums
+FROM(
+    SELECT 
+    num,
+    LAG(num,1) OVER (ORDER BY id) AS prev1,
+    LAG(num,2) OVER (ORDER BY id) AS prev2
+    FROM logs
+) t
+WHERE num = prev1 AND num = prev2;
+
+Problem 47: Valid Emails (Regex)
+SELECT user_id, name, mail
+FROM users
+WHERE mail REGEXP '^[A-Za-z][A-Za-z0-9_.-]*@leetcode\\.com$'
+GROUP BY user_id;
+
+Problem 48: Immediate Delivery Percentage
+SELECT ROUND(
+    AVG(customer_pref_delivery_date = order_date) * 100, 2
+) AS immediate_percentage
+FROM(
+    SELECT *,
+    ROW_NUMBER() OVER (
+        PARTITION BY customer_id 
+        ORDER BY order_date
+    ) AS rn
+    FROM delivery
+) t
+WHERE rn = 1;
+
+Problem 49: Fraction of Players with Consecutive Logins
+SELECT ROUND(
+    COUNT(DISTINCT player_id) / 
+    (SELECT COUNT(DISTINCT player_id) FROM activity), 2
+) AS fraction
+FROM(
+    SELECT player_id, event_date,
+    LEAD(event_date) OVER (
+        PARTITION BY player_id 
+        ORDER BY event_date
+    ) AS next_date
+    FROM activity
+) t
+WHERE DATEDIFF(next_date, event_date) = 1;
+
+Problem 50: Product Price at Given Date
+SELECT p.product_id,
+COALESCE(t.new_price, 10) AS price
+FROM (
+    SELECT DISTINCT product_id FROM products
+) p
+LEFT JOIN (
+    SELECT *,
+    ROW_NUMBER() OVER (
+        PARTITION BY product_id 
+        ORDER BY change_date DESC
+    ) AS rn
+    FROM products 
+    WHERE change_date <= '2019-08-16'
+) t
+ON p.product_id = t.product_id 
+AND t.rn = 1;
